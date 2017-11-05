@@ -1,0 +1,19 @@
+
+#define WIFI_SSID "<your SSID>"
+#define WIFI_PASSWORD "<your password>"
+#define OTA_PASSWORD "<your password>"
+
+#define MQTT_USERNAME "<your username>"
+#define MQTT_PASSWORD "<your pasword>"
+#define MQTT_SERVER "<your ip>"
+#define MQTT_SERVER_PORT 1883
+#define MQTT_CLIENT_ID "wakeuplight"
+#define MQTT_STATE_TOPIC "wakeuplight/rgb1"
+#define MQTT_SET_TOPIC "wakeuplight/rgb1/set"
+#define MQTT_DEBUG_TOPIC "wakeuplight/rgb1/dbg"
+
+#define BUILTIN_LED_PIN 1
+#define NUM_LEDS 60
+// 2 == pin D4 on Wemos D1 mini
+#define DATA_PIN 2
+#define CHIPSET NEOPIXEL
