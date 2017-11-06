@@ -72,7 +72,7 @@ protected:
 class Rainbow : public Effect
 {
 public:
-    Rainbow(CRGB cBegin, uint8_t brBegin) : Effect(cBegin, brBegin){};
+    Rainbow(CRGB cBegin, uint8_t brBegin) : Effect(cBegin, brBegin), m_done(false){};
 
 protected:
     virtual bool Step(CRGB *leds);
@@ -146,7 +146,7 @@ bool Transition::Step(CRGB *leds)
 class Warmwhite : public Effect
 {
 public:
-    Warmwhite(CRGB cBegin, uint8_t brBegin) : Effect(cBegin, brBegin){};
+    Warmwhite(CRGB cBegin, uint8_t brBegin) : Effect(cBegin, brBegin), m_done(false){};
 
 protected:
     virtual bool Step(CRGB *leds);
