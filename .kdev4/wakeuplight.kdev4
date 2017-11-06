@@ -1,9 +1,21 @@
+[Buildset]
+BuildItems=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00\x16\x00w\x00a\x00k\x00e\x00u\x00p\x00l\x00i\x00g\x00h\x00t)
+
+[CustomDefinesAndIncludes][ProjectPath0]
+Path=.
+parseAmbiguousAsCPP=true
+parserArguments=-ferror-limit=100 -fspell-checking -Wdocumentation -Wunused-parameter -Wunreachable-code -Wall -std=c++11
+parserArgumentsC=-ferror-limit=100 -fspell-checking -Wdocumentation -Wunused-parameter -Wunreachable-code -Wall -std=c99
+
+[CustomDefinesAndIncludes][ProjectPath0][Compiler]
+Name=Clang
+
 [CustomDefinesAndIncludes][ProjectPath0][Includes]
 1=/home/lackhove/code/wakeuplight/.piolibdeps/ArduinoJson_ID64/
 2=/home/lackhove/code/wakeuplight/.piolibdeps/FastLED_ID126/
 3=/home/lackhove/.platformio/packages/framework-arduinoespressif8266/cores/esp8266/
 4=/home/lackhove/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266WiFi/src/
-5=/home/lackhove/code/wakeuplight/.piolibdeps/PubSubClient_ID89/
+5=/home/lackhove/code/wakeuplight/.piolibdeps/PubSubClient_ID89/src/
 
 [Project]
 VersionControlSupport=kdevgit

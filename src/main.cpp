@@ -20,10 +20,14 @@
 #include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <ESP8266mDNS.h>
+#include <ArduinoOTA.h>
 
 #include "Effect.hpp"
 
 #include "config.h"
+
+#define DEBUGPRINTLN(x) if(client.connected()){client.publish(MQTT_DEBUG_TOPIC, x);}else{Serial.println(x);}
 
 const int BUFFER_SIZE = JSON_OBJECT_SIZE(10);
 
@@ -34,7 +38,6 @@ Effect* effect = NULL;
 
 void setup_wifi()
 {
-
     delay(10);
     // We start by connecting to a WiFi network
     Serial.println();
@@ -57,8 +60,74 @@ void setup_wifi()
     Serial.println(WiFi.localIP());
 }
 
+
+void reconnect()
+{
+    // Loop until we're reconnected
+    while (!client.connected())
+    {
+        Serial.print("Attempting MQTT connection...");
+
+        // Attempt to connect
+        if (client.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQTT_PASSWORD))
+        {
+            Serial.println("connected");
+            // Once connected, publish an announcement...
+            client.publish(MQTT_DEBUG_TOPIC, "alive");
+            // ... and resubscribe
+            client.subscribe(MQTT_SET_TOPIC);
+        }
+        else
+        {
+            Serial.print("failed, rc=");
+            Serial.print(client.state());
+            Serial.println(" try again in 5 seconds");
+            // Wait 5 seconds before retrying
+            delay(5000);
+        }
+    }
+}
+
+
+void setupOTA() {
+  ArduinoOTA.setHostname(MQTT_CLIENT_ID);
+  Serial.print(F("INFO: OTA hostname sets to: "));
+  Serial.println(MQTT_CLIENT_ID);
+
+  ArduinoOTA.setPassword((const char *)OTA_PASSWORD);
+  Serial.print(F("INFO: OTA password sets to: "));
+  Serial.println(OTA_PASSWORD);
+
+
+  ArduinoOTA.onStart([]() {
+    Serial.println(F("INFO: OTA starts"));
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println(F("INFO: OTA ends"));
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.print(F("INFO: OTA progresses: "));
+    Serial.print(progress / (total / 100));
+    Serial.println(F("%"));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.print(F("ERROR: OTA error: "));
+    Serial.println(error);
+    if (error == OTA_AUTH_ERROR)
+      Serial.println(F("ERROR: OTA auth failed"));
+    else if (error == OTA_BEGIN_ERROR)
+      Serial.println(F("ERROR: OTA begin failed"));
+    else if (error == OTA_CONNECT_ERROR)
+      Serial.println(F("ERROR: OTA connect failed"));
+    else if (error == OTA_RECEIVE_ERROR)
+      Serial.println(F("ERROR: OTA receive failed"));
+    else if (error == OTA_END_ERROR)
+      Serial.println(F("ERROR: OTA end failed"));
+  });
+  ArduinoOTA.begin();
+}
+
 /*
-SAMPLE PAYLOAD:
 {
   "brightness": 255,
   "color": {
@@ -72,8 +141,6 @@ SAMPLE PAYLOAD:
   "state": "ON",
   "transition": 2,
 }
-
-
 */
 bool processJson(char *message)
 {
@@ -83,7 +150,7 @@ bool processJson(char *message)
 
     if (!root.success())
     {
-        Serial.println("parseObject() failed");
+        DEBUGPRINTLN("parseObject() failed");
         return false;
     }
 
@@ -125,6 +192,7 @@ bool processJson(char *message)
         if (strcmp(root["effect"], "rainbow") == 0)
         {
             effect = new Rainbow(lastC, lastBr);
+            DEBUGPRINTLN("got rainbow effect");
         }
         else if (strcmp(root["effect"], "warmwhite") == 0)
         {
@@ -202,32 +270,6 @@ void callback(char *topic, byte *payload, unsigned int length)
     sendState();
 }
 
-void reconnect()
-{
-    // Loop until we're reconnected
-    while (!client.connected())
-    {
-        Serial.print("Attempting MQTT connection...");
-
-        // Attempt to connect
-        if (client.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQTT_PASSWORD))
-        {
-            Serial.println("connected");
-            // Once connected, publish an announcement...
-            client.publish(MQTT_DEBUG_TOPIC, "alive");
-            // ... and resubscribe
-            client.subscribe(MQTT_SET_TOPIC);
-        }
-        else
-        {
-            Serial.print("failed, rc=");
-            Serial.print(client.state());
-            Serial.println(" try again in 5 seconds");
-            // Wait 5 seconds before retrying
-            delay(5000);
-        }
-    }
-}
 
 void setup()
 {
@@ -245,6 +287,8 @@ void setup()
     effect = new Rainbow(CRGB::Black, 100);
 
     sendState();
+
+    setupOTA();
 }
 
 void loop()
@@ -254,6 +298,9 @@ void loop()
         reconnect();
     }
     client.loop();
+
+    ArduinoOTA.handle();
+
 
     effect->Step(m_leds);
 }
