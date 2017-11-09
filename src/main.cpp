@@ -69,7 +69,13 @@ void reconnect()
         Serial.print("Attempting MQTT connection...");
 
         // Attempt to connect
-        if (client.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQTT_PASSWORD))
+        if (client.connect(MQTT_CLIENT_ID,
+            MQTT_USERNAME,
+            MQTT_PASSWORD,
+            MQTT_STATE_TOPIC,
+            1,
+            true,
+            "{\"state\": \"OFF\"}"))
         {
             Serial.println("connected");
             // Once connected, publish an announcement...
@@ -187,6 +193,13 @@ bool processJson(char *message)
         newBr = root["brightness"];
     }
 
+    unsigned long dt = 1000;
+    if (root.containsKey("transition"))
+    {
+        dt = root["transition"];
+        dt = dt * 1000;
+    }
+
     if (root.containsKey("effect"))
     {
         if (strcmp(root["effect"], "rainbow") == 0)
@@ -196,7 +209,15 @@ bool processJson(char *message)
         }
         else if (strcmp(root["effect"], "warmwhite") == 0)
         {
-            effect = new Warmwhite(lastC, lastBr);
+            effect = new Transition(lastC, lastBr, Tungsten40W, newBr, dt);
+        }
+        else if (strcmp(root["effect"], "coldwhite") == 0)
+        {
+            effect = new Transition(lastC, lastBr, Halogen, newBr, dt);
+        }
+        else if (strcmp(root["effect"], "sunrise") == 0)
+        {
+            effect = new Sunrise(CRGB::Black, 0, Tungsten40W, 255, 10*60*1000.0);
         }
         else
         {
@@ -204,11 +225,11 @@ bool processJson(char *message)
         }
     }
 
-    unsigned long dt = 1000;
-    if (root.containsKey("transition"))
+    if (root.containsKey("color_temp"))
     {
-        dt = root["transition"];
-        dt = dt * 1000;
+        float temp = root["color_temp"];
+        temp = 1E6 / temp;
+        effect = new BlackbodyTemp(lastC, lastBr, temp, newBr, dt);
     }
 
     if (!effect)
@@ -225,7 +246,7 @@ void sendState()
 
     JsonObject &root = jsonBuffer.createObject();
 
-    if (effect->GetBrFinal() > 0)
+    if (effect->GetBrEnd() > 0)
     {
         root["state"] = "ON";
     }
@@ -234,13 +255,13 @@ void sendState()
         root["state"] = "OFF";
     }
 
-    CRGB currentC = effect->GetCFinal();
+    CRGB currentC = effect->GetCEnd();
     JsonObject &color = root.createNestedObject("color");
     color["r"]        = currentC.red;
     color["g"]        = currentC.green;
     color["b"]        = currentC.blue;
 
-    root["brightness"] = effect->GetBrFinal();
+    root["brightness"] = effect->GetBrEnd();
 
     char buffer[root.measureLength() + 1];
     root.printTo(buffer, sizeof(buffer));
@@ -282,9 +303,9 @@ void setup()
     client.setServer(MQTT_SERVER, MQTT_SERVER_PORT);
     client.setCallback(callback);
 
-    FastLED.addLeds<CHIPSET, DATA_PIN>(m_leds, NUM_LEDS);
+    FastLED.addLeds<CHIPSET, DATA_PIN>(m_leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
 
-    effect = new Rainbow(CRGB::Black, 100);
+    effect = new Rainbow(Tungsten40W, 255);
 
     sendState();
 
