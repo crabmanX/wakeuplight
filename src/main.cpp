@@ -217,7 +217,7 @@ bool processJson(char *message)
         }
         else if (strcmp(root["effect"], "sunrise") == 0)
         {
-            effect = new Sunrise(CRGB::Black, 0, Tungsten40W, 255, 10*60*1000.0);
+            effect = new Sunrise(CRGB::Black, 0, Tungsten40W, 255, 25*60*1000.0);
         }
         else
         {
@@ -228,7 +228,7 @@ bool processJson(char *message)
     if (root.containsKey("color_temp"))
     {
         float temp = root["color_temp"];
-        temp = 1E6 / temp;
+//         temp = 1E6 / temp;
         effect = new BlackbodyTemp(lastC, lastBr, temp, newBr, dt);
     }
 
@@ -305,9 +305,7 @@ void setup()
 
     FastLED.addLeds<CHIPSET, DATA_PIN>(m_leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
 
-    effect = new Rainbow(Tungsten40W, 255);
-
-    sendState();
+    effect = new Transition(CRGB::Black, 0, Tungsten40W, 0, 1000);
 
     setupOTA();
 }
@@ -317,6 +315,7 @@ void loop()
     if (!client.connected())
     {
         reconnect();
+        sendState();
     }
     client.loop();
 

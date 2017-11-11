@@ -237,8 +237,8 @@ bool Sunrise::Step(CRGB *leds)
         return false;
     }
 
-    uint8_t frac = map(t, 0, m_duration, 0, 240);
-    m_cCurrent   = ColorFromPalette(HeatColors_p, frac);
+    float temp = map(t, 0, m_duration, 2000, 2800);
+    m_cCurrent   = TempToRGB(temp);
     m_brCurrent  = map(t, 0, m_duration, m_brBegin, m_brEnd);
 
     FastLED.setBrightness(m_brCurrent);
