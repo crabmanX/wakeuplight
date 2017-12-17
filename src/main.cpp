@@ -217,7 +217,7 @@ bool processJson(char *message)
         }
         else if (strcmp(root["effect"], "sunrise") == 0)
         {
-            effect = new Sunrise(CRGB::Black, 0, Tungsten40W, 255, 25*60*1000.0);
+            effect = new Sunrise(CRGB::Black, 0, Tungsten40W, 255, 20*60*1000.0);
         }
         else
         {
