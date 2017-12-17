@@ -237,7 +237,8 @@ bool Sunrise::Step(CRGB *leds)
         return false;
     }
 
-    float temp = map(t, 0, m_duration, 2000, 2800);
+    float temp = map(t, 0, m_duration, 1E6/2000, 1E6/2600);
+    temp = 1E6 / temp;
     m_cCurrent   = TempToRGB(temp);
     m_brCurrent  = map(t, 0, m_duration, m_brBegin, m_brEnd);
 
